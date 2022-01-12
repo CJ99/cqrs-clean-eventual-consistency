@@ -1,32 +1,47 @@
 # ![Guaraci](docs/guaraci-icon.png) Clean Architecture CQRS with Derived Data  
 
-CQRS, using Clean Architecture, multiple databases and Eventual Consistency
-
-[![Build Status](https://fals.visualstudio.com/fals.io/_apis/build/status/fals.cqrs-clean-eventual-consistency?branchName=master)](https://fals.visualstudio.com/fals.io/_build/latest?definitionId=2&branchName=master)
+CQRS, using Clean Architecture, multiple databases, and Eventual Consistency
 
 ## :bookmark_tabs: Detailed information
 
-I also keep more detailed information in my blog, and I going to release weekly to clarify my ideas:
+I also keep more detailed information in my blog
 
 - [X] [CQRS Translated to Clean Architecture](https://blog.fals.io/2018-09-19-cqrs-clean-architecture/)
-    - [ ] CQRS Deep dive into Commands
-    - [ ] CQRS Queries and Materialization
-    - [ ] CQRS Consensus and Consistency
-    - [ ] CQRS Distributed chaos, CAP Theorem
+    - [X] CQRS Deep dive into Commands
+    - [X] CQRS Queries and Materialization
+    - [X] CQRS Consensus and Consistency
+    - [X] CQRS Distributed chaos, CAP Theorem
 
 
 ## :floppy_disk: How do I use it?
 
-You need some of the following tools:
+You're going to need the following tools:
 
 * Docker
-* Visual Studio 2019
-* .Net Core 3.0
+* Visual Studio 2019+ or Visual Studio Code
+* .Net 6
+
+Execute in your favorite command line from the `/src` folder
+
+```bash
+$ cd src
+$ docker compose build
+$ docker compose up
+```
+
+Open your browser and hit the URL to see the OpenApi
+
+`http://localhost:5000/swagger/index.html`
+
+If you can't run you can hit the health checks to see if a component is down.
+
+`http://localhost:5000/healthcheck`
+
+If you still have issues, don't run as detached and look the error on the console after executing the docker command.
 
 ## :dart: Clean Architecture
 
 Here's the basic architecture of this microservice template:
-
 
 * Respecting policy rules, with dependencies always pointing inward
 * Separation of technology details from the rest of the system
@@ -44,7 +59,7 @@ Segregation between Commands and Queries, with isolated databases and different 
 
 ### :arrow_down: Command Stack
 
-Has direct access to business rules and is responsible for only writes in the application.
+Has direct access to business rules and is responsible for only writing in the application.
 
 Below you can find a basic interaction between components in the **Command Stack**:
 
@@ -52,7 +67,7 @@ Below you can find a basic interaction between components in the **Command Stack
 
 ### :arrow_up: Query Stack
 
-Responsible to provide data to consumers of your application, containing a simplified and more suitable model for reading, with calculated data, aggregated values and materialized structures.
+Responsible for providing data to consumers of your application, containing a simplified and more suitable model for reading, with calculated data, aggregated values and materialized structures.
 
 The image contains the basic interaction between components in the **Query Stack**:
 
@@ -66,9 +81,9 @@ This example contains a simplified Domain Model, with entities, aggregate roots,
 
 ## :heavy_check_mark: TDD
 
-The project contains a well-defined IoC structure that allow you unit test almost every part of this service template, besides technology dependencies.
+The project contains a well-defined IoC structure that allows you unit test almost every part of this service template, besides technology dependencies.
 
-Inside the main layers you going to find Interfaces which are essential for the application, but with their implementations inside their own layers, what allow Mocking, Stubbing, using test doubles.
+Inside the main layer you're going to find Interfaces that are essential for the application, but with their implementations inside their own layers, what allow Mocking, Stubbing, using test doubles.
 
 There's a simple example using Mother Object Pattern and Builder to simplify unit tests and keep it maintainable and clean.
 
@@ -78,7 +93,7 @@ This microservice template comes with SRP and SOC in mind. Given the own nature 
 
 ## :page_facing_up: Derived Data
 
-Having multiple data stores makes this system a Derived Data system, which means, you never lose data, you can always rebuild one store from another, for example, if you lose an event which sync data between the write and read database you can always get this data back from the write database and rebuild the read store.
+Having multiple data stores makes this system a Derived Data system, which means, you never lose data, you can always rebuild one store from another, for example, if you lose an event which syncs data between the write and read database you can always get this data back from the write database and rebuild the read store.
 
 *Domain Model* is materialized to *Query Models* using view materializer. Keeping this as separed component in the query stack allows fully control to mapped properties and fully testable.
 
@@ -92,7 +107,7 @@ Every successful handled command creates an event, which is published into a Mes
 
 ## :clock2: Eventual Consistency
 
-Everything comes with some kind of down side. The case of CQRS with multiple databases, to maintain high availability and scalability we create inconsistencies between databases.
+Everything comes with some trade offs. The case of CQRS with multiple databases, to maintain high availability and scalability we create inconsistencies between databases.
 
 More specifically, replicating data between two databases creates an eventual consistency, which in a specific moment in time, given the replication lag they are different, although is a temporary state and it eventually resolves itself.
 

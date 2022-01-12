@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Swashbuckle.AspNetCore.Swagger;
 
 namespace Ametista.Api
 {
@@ -34,7 +33,6 @@ namespace Ametista.Api
                     .AllowAnyMethod()
                     .AllowAnyHeader());
             });
-
             services.AddScoped<ValidationNotificationHandler>();
             services.AddSingleton(Configuration.Get<AmetistaConfiguration>());
 
@@ -45,10 +43,19 @@ namespace Ametista.Api
                 c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "My API", Version = "v1" });
             });
 
+            var sqlConnString = Configuration.GetConnectionString("SqlServerConnectionString");
+
             services
-                .AddDbContext<WriteDbContext>(options => 
-                options.UseSqlServer(Configuration.GetConnectionString("SqlServerConnectionString"), 
+                .AddDbContext<WriteDbContext>(options =>
+                options.UseSqlServer(sqlConnString,
                 b => b.MigrationsAssembly("Ametista.Infrastructure")));
+
+            var redisConnString = Configuration.GetConnectionString("RedisCache");
+
+            services
+                .AddHealthChecks()
+                .AddSqlServer(sqlConnString)
+                .AddRedis(redisConnString);
         }
 
         public virtual void ConfigureContainer(ContainerBuilder builder)
@@ -84,10 +91,13 @@ namespace Ametista.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            using (var serviceScope = app.ApplicationServices.CreateScope())
+            if (env.EnvironmentName == "Docker")
             {
-                var context = serviceScope.ServiceProvider.GetService<WriteDbContext>();
-                context.Database.Migrate();
+                using (var serviceScope = app.ApplicationServices.CreateScope())
+                {
+                    var context = serviceScope.ServiceProvider.GetService<WriteDbContext>();
+                    context.Database.Migrate();
+                }
             }
 
             app.UseStaticFiles();
@@ -96,6 +106,7 @@ namespace Ametista.Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHealthChecks("/healthcheck");
             });
 
             ConfigureEventBus(app);

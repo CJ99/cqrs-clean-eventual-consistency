@@ -1,5 +1,5 @@
-﻿using Ametista.Command;
-using Ametista.Command.Commands;
+﻿using Ametista.Command.Abstractions;
+using Ametista.Command.CreateCard;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -18,7 +18,7 @@ namespace Ametista.Api.Endpoints.CreateCard
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody]CreateCardRequest request)
+        public async Task<IActionResult> Post([FromBody] CreateCardRequest request)
         {
             var command = new CreateCardCommand(request.Number, request.CardHolder, request.ExpirationDate);
             var result = await commandDispatcher.Dispatch(command);
@@ -33,7 +33,7 @@ namespace Ametista.Api.Endpoints.CreateCard
                     ExpirationDate = result.ExpirationDate
                 };
 
-                return Ok(response);
+                return CreatedAtAction(null, response);
             }
 
             return BadRequest(request);
